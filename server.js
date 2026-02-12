@@ -72,6 +72,28 @@ app.post('/api/messages', async (req, res) => {
   }
 });
 
+app.delete('/api/chats/:chatId', async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    await Message.deleteMany({ chatId });
+    await Chat.findByIdAndDelete(chatId);
+    res.json({ success: true, message: 'Chat and messages deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/chats/:chatId', async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { title } = req.body;
+    const chat = await Chat.findByIdAndUpdate(chatId, { title, updatedAt: Date.now() }, { new: true });
+    res.json(chat);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
