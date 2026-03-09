@@ -23,7 +23,7 @@ const io = new Server(server, {
   }
 });
 
-// Map of sessionId -> { hostSocketId, viewerSocketIds: [], status: 'waiting'|'active' }
+// Map of sessionId -> { hostSocketId, viewerSocketIds: [], status: 'waiting'|'active', permissions: 'read'|'write' }
 const sessions = new Map();
 
 const Chat = require('./models/Chat');
@@ -102,7 +102,8 @@ io.on('connection', (socket) => {
     sessions.set(sessionId, {
       hostSocketId: socket.id,
       viewerSocketIds: [],
-      status: 'waiting'
+      status: 'waiting',
+      permissions: 'write' // Default to write permission for now
     });
     console.log(`Session created: ${sessionId} by host ${socket.id}`);
   });
@@ -157,10 +158,40 @@ io.on('connection', (socket) => {
     const session = sessions.get(sessionId);
     if (!session || socket.id === session.hostSocketId) return;
 
-    // Relay viewer command to host
-    io.to(session.hostSocketId).emit('control-command', {
-      from: socket.id,
-      command
+    // Relay viewer command to host ONLY if session has write permissions
+    if (session.permissions === 'write') {
+      io.to(session.hostSocketId).emit('control-command', {
+        from: socket.id,
+        command
+      });
+    } else {
+      socket.emit('error', 'Control commands are disabled in read-only mode');
+    }
+  });
+
+  // Toggle permissions (Host Only)
+  socket.on('toggle-permissions', ({ sessionId, permissions }) => {
+    const session = sessions.get(sessionId);
+    if (!session || socket.id !== session.hostSocketId) return;
+
+    session.permissions = permissions;
+    session.viewerSocketIds.forEach(vid => {
+      io.to(vid).emit('permissions-updated', { permissions });
+    });
+    console.log(`Session ${sessionId} permissions updated to: ${permissions}`);
+  });
+
+  // Voice status relay
+  socket.on('voice-status', ({ sessionId, enabled }) => {
+    const session = sessions.get(sessionId);
+    if (!session) return;
+
+    // Relay to everyone else in the session
+    const participants = [session.hostSocketId, ...session.viewerSocketIds];
+    participants.forEach(pid => {
+      if (pid !== socket.id) {
+        io.to(pid).emit('voice-status-updated', { from: socket.id, enabled });
+      }
     });
   });
 
