@@ -105,7 +105,6 @@ io.on('connection', (socket) => {
       status: 'waiting',
       permissions: 'write' // Default to write permission for now
     });
-    console.log(`Session created: ${sessionId} by host ${socket.id}`);
   });
 
   // Viewer: Request to join a session
@@ -120,7 +119,6 @@ io.on('connection', (socket) => {
     io.to(session.hostSocketId).emit('connection-request', {
       viewerId: socket.id
     });
-    console.log(`Viewer ${socket.id} requested to join session ${sessionId}`);
   });
 
   // Host: Approve/Deny connection request
