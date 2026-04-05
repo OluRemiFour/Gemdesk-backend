@@ -3,7 +3,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const mongoose = require('mongoose');
 require('dotenv').config();
 
 // MongoDB Connection
