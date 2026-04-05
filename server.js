@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const sgMail = require('@sendgrid/mail');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 // MongoDB Connection
@@ -95,46 +95,7 @@ app.patch('/api/chats/:chatId', async (req, res) => {
   }
 });
 
-app.post('/api/report-issue', async (req, res) => {
-  try {
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (!apiKey) {
-      console.warn("SENDGRID_API_KEY is not defined. Email not sent.");
-      return res.status(500).json({ error: 'SendGrid API key not configured' });
-    }
 
-    sgMail.setApiKey(apiKey);
-
-    const { name, email, category, description } = req.body;
-
-    if (!name || !email || !category || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const msg = {
-      to: 'innovativedesign67@gmail.com',
-      from: 'innovativedesign67@gmail.com', // Must be a verified sender on SendGrid
-      replyTo: email,
-      subject: `GemDesk Issue Report: ${category} from ${name}`,
-      text: `Name: ${name}\nEmail: ${email}\nCategory: ${category}\n\nDescription:\n${description}`,
-      html: `
-        <h3>New Issue Report from GemDesk Landing Page</h3>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Category:</strong> ${category}</p>
-        <h4>Description:</h4>
-        <p>${description.replace(/\n/g, '<br>')}</p>
-      `,
-    };
-
-    await sgMail.send(msg);
-
-    res.json({ success: true, message: 'Issue reported successfully' });
-  } catch (error) {
-    console.error('Error reporting issue via SendGrid:', error);
-    res.status(500).json({ error: 'Failed to report issue' });
-  }
-});
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
