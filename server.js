@@ -96,6 +96,14 @@ app.patch('/api/chats/:chatId', async (req, res) => {
 
 
 
+app.get('/', (req, res) => {
+  res.send('GemDesk Signaling Server is running');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -105,7 +113,7 @@ io.on('connection', (socket) => {
       hostSocketId: socket.id,
       viewerSocketIds: [],
       status: 'waiting',
-      permissions: 'write' // Default to write permission for now
+      permissions: 'write' 
     });
   });
 
@@ -215,6 +223,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Signaling server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Signaling server running on port ${PORT} and binding to 0.0.0.0`);
 });
