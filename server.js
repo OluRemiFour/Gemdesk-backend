@@ -203,6 +203,16 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Viewer: ask host to re-send its stream (used when stream init times out)
+  socket.on('retry-stream', ({ sessionId }) => {
+    const session = sessions.get(sessionId);
+    if (!session) return;
+    // Only a known viewer of this session can trigger a retry
+    if (!session.viewerSocketIds.includes(socket.id)) return;
+    io.to(session.hostSocketId).emit('viewer-retry-stream', { viewerId: socket.id });
+    console.log(`Viewer ${socket.id} requested stream retry for session ${sessionId}`);
+  });
+
   socket.on('disconnect', () => {
     // Cleanup sessions if host disconnects
     for (const [sessionId, session] of sessions.entries()) {
